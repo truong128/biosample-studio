@@ -1,4 +1,5 @@
-"""BioSample Studio: Streamlit sample-size planning for life science studies.
+
+"""BioSample Studio: To calculate the Sample-size planning for life science studies.
 
 Run locally: streamlit run app.py
 This is design-stage guidance; statistical consultation recommended for confirmatory work.
@@ -23,7 +24,7 @@ from core.power import (
 from references import REFERENCES, get_refs
 
 APP_NAME = 'BioSample Studio'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 st.set_page_config(page_title=f'{APP_NAME} | Sample Size & Power', page_icon='🧬',
                    layout='wide', initial_sidebar_state='expanded')
@@ -42,7 +43,7 @@ div[data-testid="stMetric"] {background:#f1f7fa; padding:12px 16px; border:1px s
 
 
 def refs_show(*keys):
-    st.markdown('#### Cơ sở khoa học / References')
+    st.markdown('#### Scientific references')
     for ref in get_refs(*keys):
         st.markdown(f"- [{ref['citation']}]({ref['url']})")
 
@@ -56,7 +57,7 @@ def result_report(module, params, result, notes, citations):
 
 def deliver_report(report, label='study'):
     document = json.dumps(report, indent=2, ensure_ascii=False, default=str)
-    st.download_button('⬇️ Tải báo cáo JSON (giả định, kết quả, nguồn)', document,
+    st.download_button('⬇️ Download JSON report (assumptions, results, references)', document,
                        file_name=f'biosample_{label}_report.json', mime='application/json',
                        use_container_width=True)
     lines = [f'# BioSample Studio | {report["module"]}', '',
@@ -67,7 +68,7 @@ def deliver_report(report, label='study'):
     lines += [f'- **{k}**: {v}' for k,v in report['results'].items()]
     lines += ['', '## Limitations','', report['limitations'], '', '## References','']
     lines += [f'- {url}' for url in report['references']]
-    st.download_button('⬇️ Tải Methods (Markdown)', '\n'.join(lines),
+    st.download_button('⬇️ Download methods report (Markdown)', '\n'.join(lines),
                        file_name=f'biosample_{label}_methods.md', mime='text/markdown',
                        use_container_width=True)
 
@@ -81,73 +82,73 @@ def power_plot(ns, vals, target, x_label='Biological samples per group'):
     st.plotly_chart(fig, use_container_width=True)
 
 
-def show_sample_metrics(n_a, n_b, achieved, attrition, unit='mẫu sinh học'):
+def show_sample_metrics(n_a, n_b, achieved, attrition, unit='biological samples'):
     c1,c2,c3,c4=st.columns(4)
-    c1.metric(f'{unit} · nhóm A', f'{n_a:,}')
-    c2.metric(f'{unit} · nhóm B', f'{n_b:,}')
-    c3.metric('Power ước tính', f'{achieved:.1%}')
-    c4.metric('Tổng cần tuyển sau hao hụt',
+    c1.metric(f'{unit} · Group A', f'{n_a:,}')
+    c2.metric(f'{unit} · Group B', f'{n_b:,}')
+    c3.metric('Estimated power', f'{achieved:.1%}')
+    c4.metric('Total to recruit (including attrition)',
               f'{recruitment_n(n_a, attrition) + recruitment_n(n_b, attrition):,}')
 
 
 st.sidebar.markdown('### 🧬 BioSample Studio')
 st.sidebar.caption('Evidence-informed sample size planning | v'+VERSION)
 PAGES = [
-    '🏠 Bắt đầu / Study planner',
-    '🧪 Sinh học cơ bản / Classical',
+    '🏠 Study planner',
+    '🧪 Classical experiments',
     '🧬 Bulk RNA-seq & Omics FDR',
     '🔬 Single-cell / Spatial',
     '🐁 DeepLabCut / Behavior',
     '🎯 External ML validation',
     '📚 Methods & References',
 ]
-page = st.sidebar.radio('Chọn bộ tính', PAGES, label_visibility='collapsed')
+page = st.sidebar.radio('Select a calculator', PAGES, label_visibility='collapsed')
 st.sidebar.divider()
-st.sidebar.info('⚠️ Kết quả phụ thuộc giả định. Không thay thế đánh giá của chuyên gia biostatistics, hoặc tính power trên pilot data phù hợp.')
+st.sidebar.info('⚠️ Results depend on assumptions. They do not replace statistical review or power calculations calibrated to suitable pilot data.')
 st.sidebar.caption('No user account, database, tracking, or remote API in this source. Uploaded CSV data are processed by the Streamlit server hosting the app.')
 
 st.markdown('''<div class="hero"><h1>BioSample Studio</h1>
 <p>Scientific sample size and power planning for biomedical experiments, omics, single-cell and markerless behavior tracking.</p></div>''', unsafe_allow_html=True)
 
 if page == PAGES[0]:
-    st.markdown('## Chọn thiết kế trước khi tính sample size')
-    st.markdown('Phần mềm phân biệt **biological replicate** với phép đo lặp lại và hỗ trợ báo cáo các giả định cần thiết khi viết protocol, manuscript hoặc grant.')
+    st.markdown('## Choose your study design before calculating sample size')
+    st.markdown('This application distinguishes **independent biological replicates** from repeated measurements and documents assumptions for protocols, manuscripts, and grant applications.')
     col1,col2,col3 = st.columns(3)
     with col1:
-        st.markdown('### 🧪 Sinh học cơ bản')
-        st.write('Hai nhóm độc lập, paired trước-sau, hai tỷ lệ, ANOVA một yếu tố. Power theo mô hình t, z hoặc F.')
+        st.markdown('### 🧪 Classical experiments')
+        st.write('Independent two-group comparisons, paired pre/post measurements, two proportions, and one-way ANOVA using t, z, or F test power.')
         st.markdown('### 🧬 RNA-seq / Omics')
-        st.write('Ước lượng số mẫu độc lập mỗi nhóm để đạt power khi kiểm soát BH-FDR trên hàng nghìn đặc trưng.')
+        st.write('Estimate independent biological samples per group needed for statistical power with BH-FDR control across thousands of features.')
     with col2:
         st.markdown('### 🔬 Single-cell / Spatial')
-        st.write('Số donor, số tế bào/donor và biến thiên giữa donor; không dùng số tế bào làm n độc lập.')
+        st.write('Plan for independent donors while accounting for cells per donor and between-donor variation; cells are not independent donors.')
         st.markdown('### 🐁 DeepLabCut')
-        st.write('Số động vật, session, frame, tự tương quan thời gian và repeated measurements.')
+        st.write('Plan the number of animals, sessions, and frames, allowing for temporal autocorrelation and repeated measurements.')
     with col3:
         st.markdown('### 🎯 Machine learning')
-        st.write('Độ chính xác của sensitivity/specificity khi đánh giá trên một external test cohort; không tính cỡ mẫu huấn luyện mô hình.')
+        st.write('Plan confidence-interval precision for sensitivity/specificity in an external test cohort, not sample size for model development.')
         st.markdown('### 📚 Reference library')
-        st.write('Nguồn primary-method đã lựa chọn, DOI và minh bạch về phạm vi áp dụng.')
+        st.write('Curated primary methodological papers, DOI links, assumptions, and scope of validity.')
     st.divider()
-    st.subheader('5 nguyên tắc trước khi quyết định số mẫu')
-    st.markdown('''1. **Primary endpoint:** Chọn chính xác phép đo/hypothesis dùng làm quyết định chính.
-2. **Experimental unit:** Đơn vị độc lập được randomize hoặc lấy mẫu. Frame, cell, lát cắt và technical replicate thường không độc lập.
-3. **Minimum relevant effect:** Khác biệt nhỏ nhất có giá trị sinh học hoặc lâm sàng.
-4. **Variance:** Ước lượng từ nghiên cứu phù hợp, pilot đủ dữ liệu, hoặc phân tích độ nhạy nhiều giả định.
-5. **Power, alpha, FDR:** Đặt trước phân tích, có kế hoạch QC, batch, missingness và recruitment inflation.''')
-    st.warning('Không có một cỡ mẫu cố định áp dụng được cho mọi RNA-seq, every proteomics assay, mỗi mô hình ML hay DeepLabCut. Các module dùng mức xấp xỉ khác nhau, hãy đọc giới hạn riêng.')
+    st.subheader('Five principles for defensible sample size planning')
+    st.markdown('''1. **Primary endpoint:** Prespecify the outcome and hypothesis used to determine sample size.
+2. **Experimental unit:** Identify independently sampled or randomized units. Frames, cells, sections, and technical replicates are usually not independent units.
+3. **Minimum relevant effect:** Specify the smallest biologically or clinically meaningful difference.
+4. **Variance:** Estimate variability from comparable studies or pilot data, or examine multiple plausible scenarios.
+5. **Power, alpha, FDR:** Prespecify operating characteristics and account for quality control, batch, missingness, and recruitment inflation.''')
+    st.warning('No single sample size applies to all RNA-seq, proteomics, ML, or DeepLabCut studies. Each module uses specific approximations; review its limitations.')
     refs_show('ARRIVE_EE','PROPER','SCPOWER','PSEUDO')
 
 elif page == PAGES[1]:
     st.header('Classical biological experiment calculator')
-    kind = st.selectbox('Thiết kế', ['Hai nhóm độc lập (continuous)', 'Paired / repeated before-after',
-                                     'Hai tỷ lệ (binary endpoint)', 'One-way ANOVA (balanced groups)'])
+    kind = st.selectbox('Study design', ['Two independent groups (continuous endpoint)', 'Paired / repeated before-after',
+                                     'Two proportions (binary endpoint)', 'One-way ANOVA (balanced groups)'])
     with st.form('classical_form'):
         c1,c2,c3=st.columns(3)
         with c1: alpha=st.number_input('Two-sided alpha', .001,.20,.05,.005, format='%.3f')
         with c2: target=st.slider('Target power', .50,.99,.80,.01)
         with c3: attrition=st.slider('Expected sample exclusion / attrition',0.,.50,.10,.01)
-        if kind == 'Hai nhóm độc lập (continuous)':
+        if kind == 'Two independent groups (continuous endpoint)':
             c1,c2,c3=st.columns(3)
             with c1: delta=st.number_input('Absolute difference of group means (unit)', min_value=.001,value=.5,step=.1)
             with c2: sd=st.number_input('Within-group standard deviation (same unit)',min_value=.001,value=1.,step=.1)
@@ -156,7 +157,7 @@ elif page == PAGES[1]:
             c1,c2=st.columns(2)
             with c1: delta=st.number_input('Mean paired difference',min_value=.001,value=.5,step=.1)
             with c2: sd_diff=st.number_input('SD of the *within-subject difference*',min_value=.001,value=1.,step=.1)
-        elif kind == 'Hai tỷ lệ (binary endpoint)':
+        elif kind == 'Two proportions (binary endpoint)':
             c1,c2,c3=st.columns(3)
             with c1: pa=st.number_input('Group A event proportion',.001,.999,.30,.01)
             with c2: pb=st.number_input('Group B event proportion',.001,.999,.50,.01)
@@ -165,36 +166,36 @@ elif page == PAGES[1]:
             c1,c2=st.columns(2)
             with c1: f=st.number_input('Cohen f (standardized between-group effect)',.01,3.,.25,.05)
             with c2: groups=st.number_input('Number of groups',min_value=3,max_value=20,value=3,step=1)
-        submitted=st.form_submit_button('Tính sample size & power',use_container_width=True,type='primary')
+        submitted=st.form_submit_button('Calculate sample size and power',use_container_width=True,type='primary')
     if submitted:
         try:
-            if kind.startswith('Hai nhóm'):
+            if kind.startswith('Two independent groups'):
                 r=two_sample_t(delta,sd,alpha,target,ratio)
             elif kind.startswith('Paired'):
                 r=paired_t(delta,sd_diff,alpha,target)
-            elif kind.startswith('Hai tỷ'):
+            elif kind.startswith('Two proportions'):
                 r=two_proportions(pa,pb,alpha,target,ratio)
             else:
                 r=one_way_anova(f,groups,alpha,target)
             st.session_state['classical_result']=(kind,r,attrition,alpha,target,{})
         except (ValueError,OverflowError,RuntimeError) as e:
-            st.error(f'Input hoặc giải nghiệm không phù hợp: {e}')
+            st.error(f'Invalid input or solver failure: {e}')
     if 'classical_result' in st.session_state:
         saved_kind,r,loss,a,p,_=st.session_state['classical_result']
         if saved_kind != kind:
-            st.info('Thiết kế vừa thay đổi; nhấn Tính để tạo kết quả cho thiết kế mới.')
+            st.info('The study design has changed. Select Calculate to update the results.')
         else:
             if kind.startswith('One-way'):
-                st.metric('Mỗi nhóm',r.n_group_a)
-                st.metric('Tổng mẫu có thể phân tích',r.n_group_b)
-                st.metric('Tổng mẫu tuyển (ước tính)',recruitment_n(r.n_group_a,loss)*int(groups))
+                st.metric('Per group',r.n_group_a)
+                st.metric('Total analyzable samples',r.n_group_b)
+                st.metric('Estimated total recruitment',recruitment_n(r.n_group_a,loss)*int(groups))
             elif kind.startswith('Paired'):
-                st.metric('Số người/động vật có cả hai thời điểm',r.n_group_a)
-                st.metric('Cần tuyển (đã xét hao hụt)',recruitment_n(r.n_group_a,loss))
+                st.metric('Paired participants/animals with both observations',r.n_group_a)
+                st.metric('To recruit (including attrition)',recruitment_n(r.n_group_a,loss))
             else:
                 show_sample_metrics(r.n_group_a,r.n_group_b,r.achieved_power,loss)
             st.caption(f'Method: {r.method}. Standardized effect size = {r.effect_size:.3f}.')
-            if not kind.startswith('One-way') and not kind.startswith('Hai tỷ'):
+            if not kind.startswith('One-way') and not kind.startswith('Two proportions'):
                 ns=np.unique(np.maximum(3, np.round(np.linspace(max(3,r.n_group_a//4),
                                               max(10,r.n_group_a*2),30)).astype(int)))
                 values=power_curve_t(r.effect_size,a,ns,paired=kind.startswith('Paired'),
@@ -259,7 +260,7 @@ elif page == PAGES[2]:
     if 'omics_result' in st.session_state:
         c,curve,pilot_flag,loss,features_used=st.session_state['omics_result']
         if c.assay!=assay:
-            st.info('Các kết quả hiển thị đang thuộc modality khác. Chạy lại simulation để cập nhật.')
+            st.info('These results are from a different omics modality. Re-run the simulation to update them.')
         else:
             n_reco=recommend_n(curve)
             c1,c2,c3=st.columns(3)
@@ -268,9 +269,9 @@ elif page == PAGES[2]:
             c3.metric('Assumed true DE fraction',f'{c.pi1:.1%}')
             st.caption(f'Actual features simulated: {features_used:,}; uploaded reference profile: {pilot_flag}.')
             if n_reco:
-                st.success(f'Trong các n đã thử, {n_reco} biological samples/group là lựa chọn đầu tiên đạt target power; tuyển ≥ {recruitment_n(n_reco,loss)} mẫu/group với QC loss {loss:.0%}. Đây không phải giá trị minimum chính xác.')
+                st.success(f'Among the tested sample sizes, {n_reco} biological samples/group is the first to meet target power. Plan to recruit at least {recruitment_n(n_reco,loss)} per group with {loss:.0%} expected QC failure. This is not an exact mathematical minimum.')
             else:
-                st.warning('Chưa đạt target power trong dãy n đã thử. Mở rộng grid và/hoặc xem lại effect size và variance assumptions.')
+                st.warning('Target power was not reached within the tested sample-size grid. Expand the grid or revisit effect-size and variance assumptions.')
             fig=go.Figure()
             fig.add_trace(go.Scatter(x=curve['n_per_group'],y=curve['expected_power'],
                 mode='lines+markers',name='Expected targeted power'))
@@ -287,7 +288,7 @@ elif page == PAGES[2]:
              'power_CI_low_MC':'{:.1%}','power_CI_high_MC':'{:.1%}',
              'mean_false_discovery_proportion':'{:.2%}', 'mean_discoveries':'{:.1f}',
              'mean_false_positive_calls':'{:.1f}'}),hide_index=True,use_container_width=True)
-            st.download_button('⬇️ Tải kết quả toàn bộ grid (.csv)',curve.to_csv(index=False),
+            st.download_button('⬇️ Download complete power grid (.csv)',curve.to_csv(index=False),
                               file_name='biosample_omics_power_curve.csv',mime='text/csv')
             notes=('Z-statistic Monte Carlo under assumed independent features and correctly calibrated null p-values; '
                    'bulk RNA-seq variance is based on the NB delta-method. Does NOT generate RNA counts or fit DESeq2, '
@@ -306,7 +307,7 @@ elif page == PAGES[2]:
 
 elif page == PAGES[3]:
     st.header('Single-cell and spatial: biological donors vs cells / spots')
-    st.info('Chỉ tính cho **một endpoint** là trung bình ở cấp donor / biological specimen. Đối với DE hàng nghìn gene, cần scPower, muscat hoặc simulation theo cell type / pseudobulk; kết quả ở đây KHÔNG có điều chỉnh FDR.')
+    st.info('This module covers **one endpoint** summarized at the donor or biological specimen level. For DE across thousands of genes, use scPower, muscat, or cell-type-specific pseudobulk simulations. Results here are NOT FDR-adjusted.')
     with st.form('sc_form'):
         c1,c2,c3=st.columns(3)
         with c1: delta=st.number_input('Target difference of donor summaries',.001,10.,.5,.1)
@@ -336,8 +337,8 @@ elif page == PAGES[3]:
         c1.metric('Expected usable target cells/donor',f'{o["expected_target_cells"]:,.1f}')
         c2.metric('SD of donor-level summary',f'{o["sd_donor_summary"]:.3f}')
         if o['expected_target_cells']<10:
-            st.warning('Rất ít cells/region thuộc target. Distribution of donor-level means and missing cell types will require explicit simulation.')
-        st.warning('Cấp donor là đơn vị độc lập. Hierarchical Gaussian variance approximation only; no gene-level FDR, no dropout/zero inflation, no reads-per-cell, no cell-type detection model, no batch or library depth. Spatial spots may be spatially autocorrelated.')
+            st.warning('Very few target cells or regional spots are expected. The distribution of donor-level means and missing cell types requires explicit simulation.')
+        st.warning('Independent donors are the unit of replication. This is a hierarchical Gaussian variance approximation only, with no gene-level FDR, dropout/zero inflation, reads-per-cell, cell-type detection model, batch, or library depth. Spatial spots may be autocorrelated.')
         deliver_report(result_report('Single-cell donor endpoint',inp,
                         {'n_donors_per_group':r.n_group_a,'power':r.achieved_power,
                          'expected_target_cells':o['expected_target_cells']},
@@ -347,7 +348,7 @@ elif page == PAGES[3]:
 
 elif page == PAGES[4]:
     st.header('DeepLabCut: animal-level power for behavioral outcomes')
-    st.markdown('DeepLabCut trích xuất vị trí / pose. **Behavioral endpoint** cần được định nghĩa riêng (ví dụ speed, freezing %, bout duration). Đơn vị n thường là động vật được phân nhóm độc lập, **không phải video frames**.')
+    st.markdown('DeepLabCut estimates body-part positions and poses. Define a separate **behavioral endpoint**, such as speed, freezing percentage, or bout duration. The independent unit is generally the randomized animal, **not video frames**.')
     with st.form('dlc_form'):
         c1,c2,c3=st.columns(3)
         with c1: delta=st.number_input('Expected difference in animal-level endpoint',.001,1000.,.5,.1)
@@ -390,7 +391,7 @@ elif page == PAGES[4]:
 
 elif page == PAGES[5]:
     st.header('External classifier validation: precision of sensitivity & specificity')
-    st.info('Đây là **sample size cho đánh giá mô hình đã khóa trên tập external test**, không phải sample size cho training ML/AI model. Không ước lượng power để so sánh AUC hay validation across sites.')
+    st.info('This calculates **external test sample size for evaluating a locked model**, NOT sample size for ML/AI training. It does not provide power for comparing AUCs or validation across sites.')
     with st.form('validation_form'):
         c1,c2,c3=st.columns(3)
         with c1: sens=st.number_input('Expected sensitivity',.01,.99,.85,.01)
@@ -421,7 +422,7 @@ elif page == PAGES[5]:
 
 else:
     st.header('Methods, validity tiers and literature')
-    st.markdown('''**Mức độ của các module**
+    st.markdown('''**Scope and validity of each module**
 
 | Module | Statistical implementation | Validity / what is excluded |
 |---|---|---|
@@ -432,9 +433,9 @@ else:
 | DeepLabCut | Animal-summary t test with AR1 effective frame count | Not a hierarchical mixed model; no cage/litter, nonlinear behavior, tracking error |
 | ML external validation | Wilson CI precision of sensitivity and specificity | Does not size development/training cohorts |
 
-**Không nên hiểu** các tham khảo là phần mềm này đã thực thi đầy đủ thuật toán của từng bài báo. Những tài liệu này xác định phương pháp khoa học, giả định, hoặc các phương pháp chuyên biệt mà người nghiên cứu nên dùng để confirm.
+**Do not assume** that citing a paper means this software fully implements that paper's algorithm. The references provide the methodological basis, assumptions, and specialized approaches needed for final confirmation.
 ''')
-    st.markdown('### Tham khảo có liên kết DOI / tài liệu gốc')
+    st.markdown('### Primary methodological references and DOI links')
     st.dataframe(pd.DataFrame([{'Topic':r['topic'],'Paper / method':r['citation'],
                                'DOI':r['doi'], 'URL':r['url']} for r in REFERENCES]),
                  hide_index=True,use_container_width=True)
@@ -442,14 +443,14 @@ else:
                        file_name='biosample_references.csv',mime='text/csv')
     st.subheader('Pre-registration & reporting checklist')
     for item in [
-        'Chọn primary endpoint và minimum biologically meaningful effect trước phân tích',
-        'Định nghĩa biological unit và unit of randomization',
-        'Lấy variance assumptions từ nghiên cứu gần nhất hoặc multiple plausible scenarios',
-        'Prespecify alpha, target power, FDR hoặc multiplicity correction và group allocation',
-        'Xác định batch, sex, age, tissue composition, cage/litter hoặc donor clustering',
-        'Lập kế hoạch exclusions, missing assays, low-quality tracking và hao hụt mẫu',
-        'Viết rõ software version, seed, simulation grid, repetitions, method limitations',
-        'Với confirmatory omics: calibrate against pilot/public data and intended analysis pipeline',
+        'Prespecify the primary endpoint and minimum biologically meaningful effect',
+        'Define the biological experimental unit and unit of randomization',
+        'Base variance assumptions on comparable studies or multiple plausible scenarios',
+        'Prespecify alpha, target power, FDR or other multiplicity correction, and allocation ratio',
+        'Identify batch, sex, age, tissue composition, cage/litter, or donor clustering effects',
+        'Plan exclusions, missing assays, tracking quality control, and attrition',
+        'Report software version, random seed, simulation grid, repetitions, and limitations',
+        'For confirmatory omics, calibrate against suitable pilot/public data and the intended analysis pipeline',
     ]:
         st.checkbox(item,value=False)
     st.caption('Research software / exploratory research planning. It is not a clinical decision support device.')
