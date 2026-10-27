@@ -91,7 +91,7 @@ def show_sample_metrics(n_a, n_b, achieved, attrition, unit='biological samples'
               f'{recruitment_n(n_a, attrition) + recruitment_n(n_b, attrition):,}')
 
 
-st.sidebar.markdown('### 🧬 BioSample Studio')
+st.sidebar.markdown('### 🧬 BioSample Studio - RCC_CUNY School of Medicine - Truong Nguyen')
 st.sidebar.caption('Evidence-informed sample size planning | v'+VERSION)
 PAGES = [
     '🏠 Study planner',
