@@ -23,7 +23,7 @@ from core.power import (
 )
 from references import REFERENCES, get_refs
 
-APP_NAME = 'BioSample Studio'
+APP_NAME = 'BioSample Studio - RCC_CUNY School of Medicine - Truong Nguyen'
 VERSION = '1.0.1'
 
 st.set_page_config(page_title=f'{APP_NAME} | Sample Size & Power', page_icon='🧬',
